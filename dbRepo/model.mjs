@@ -1,14 +1,13 @@
 import mongoose from 'mongoose';
 
 
-let productSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    price: Number,
-    description: String,
+let tweetSchema = new mongoose.Schema({
+    text: { type: String, required: true }, 
     owner: { type: mongoose.ObjectId, required: true },
+    isDeleted:{type: Boolean, default: false},
     createdOn: { type: Date, default: Date.now }
 });
-export const productModel = mongoose.model('products', productSchema);
+export const tweetModel = mongoose.model('products', tweetSchema);
 
 
 const userSchema = new mongoose.Schema({
@@ -18,7 +17,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     createdOn: { type: Date, default: Date.now },
 });
-export const userModel = mongoose.model('Users', userSchema);
+export const userModel = mongoose.model('users', userSchema);
 
 
 

@@ -1,19 +1,17 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import {productModel} from './../dbRepo/model.mjs'
+import { tweetModel } from './../dbRepo/model.mjs'
 
 const router = express.Router()
 
 
 
-router.post('/product', (req, res) => {
+router.post('/tweet', (req, res) => {
 
     const body = req.body;
 
     if ( // validation
-        !body.name
-        || !body.price
-        || !body.description
+        !body.text
     ) {
         res.status(400).send({
             message: "required parameters missing",
@@ -21,16 +19,12 @@ router.post('/product', (req, res) => {
         return;
     }
 
-    console.log(body.name)
-    console.log(body.price)
-    console.log(body.description)
+    console.log(body.text)
 
-   
 
-    productModel.create({
-        name: body.name,
-        price: body.price,
-        description: body.description,
+
+    tweetModel.create({
+        text: body.text,
         owner: new mongoose.Types.ObjectId(body.token._id)
     },
         (err, saved) => {
@@ -38,7 +32,7 @@ router.post('/product', (req, res) => {
                 console.log(saved);
 
                 res.send({
-                    message: "product added successfully"
+                    message: "tweet added successfully"
                 });
             } else {
                 res.status(500).send({
@@ -48,43 +42,44 @@ router.post('/product', (req, res) => {
         })
 })
 
-router.get('/products', (req, res) => {
+router.get('/tweets', (req, res) => {
 
     const userId = new mongoose.Types.ObjectId(req.body.token._id);
 
-    productModel.find({owner: userId},{},
+    tweetModel.find({ owner: userId, isDeleted: false }, {},
         {
             sort: { "_id": -1 },
             limit: 100,
             skip: 0
-        }, (err, data) => {
-        if (!err) {
-            res.send({
-                message: "got all products successfully",
-                data: data
-            })
-        } else {
-            res.status(500).send({
-                message: "server error"
-            })
-        }
-    });
+        },
+        (err, data) => {
+            if (!err) {
+                res.send({
+                    message: "got all tweets successfully",
+                    data: data
+                })
+            } else {
+                res.status(500).send({
+                    message: "server error"
+                })
+            }
+        });
 }, [])
 
-router.get('/product/:id', (req, res) => {
+router.get('/tweet/:id', (req, res) => {
 
     const id = req.params.id;
 
-    productModel.findOne({ _id: id }, (err, data) => {
+    tweetModel.findOne({ _id: id }, (err, data) => {
         if (!err) {
             if (data) {
                 res.send({
-                    message: `get product by id: ${data._id} success`,
+                    message: `get tweet by id: ${data._id} success`,
                     data: data
                 });
             } else {
                 res.status(404).send({
-                    message: "product not found",
+                    message: "tweet not found",
                 })
             }
         } else {
@@ -95,29 +90,33 @@ router.get('/product/:id', (req, res) => {
     });
 })
 
-router.delete('/product/:id', (req, res) => {
+router.delete('/tweet/:id', (req, res) => {
     const id = req.params.id;
 
-    productModel.deleteOne({ _id: id }, (err, deletedData) => {
-        console.log("deleted: ", deletedData);
-        if (!err) {
+    tweetModel.deleteOne({
+        _id: id,
+        owner: new mongoose.Types.ObjectId(body.token._id)
+    }
+        , (err, deletedData) => {
+            console.log("deleted: ", deletedData);
+            if (!err) {
 
-            if (deletedData.deletedCount !== 0) {
-                res.send({
-                    message: "Product has been deleted successfully",
-                })
+                if (deletedData.deletedCount !== 0) {
+                    res.send({
+                        message: "tweet has been deleted successfully",
+                    })
+                } else {
+                    res.status(404);
+                    res.send({
+                        message: "No tweet found with this id: " + id,
+                    });
+                }
             } else {
-                res.status(404);
-                res.send({
-                    message: "No Product found with this id: " + id,
-                });
+                res.status(500).send({
+                    message: "server error"
+                })
             }
-        } else {
-            res.status(500).send({
-                message: "server error"
-            })
-        }
-    });
+        });
 
 
 
@@ -128,31 +127,30 @@ router.delete('/product/:id', (req, res) => {
 
 })
 
-router.put('/product/:id', async (req, res) => {
+router.put('/tweet/:id', async (req, res) => {
 
     const body = req.body;
     const id = req.params.id;
 
     if (
-        !body.name ||
-        !body.price ||
-        !body.description
+        !body.text
     ) {
         res.status(400).send(` required parameter missing. example request body:
         {
-            "name": "value",
-            "price": "value",
-            "description": "value"
+            "text": "value",
         }`)
         return;
     }
 
     try {
-        let data = await productModel.findByIdAndUpdate(id,
+        let data = await tweetModel.findOneAndUpdate(
             {
-                name: body.name,
-                price: body.price,
-                description: body.description
+            _id: id,
+            owner: new mongoose.Types.ObjectId(body.token._id)
+        },
+            {
+                text: body.text,
+        
             },
             { new: true }
         ).exec();
@@ -160,7 +158,7 @@ router.put('/product/:id', async (req, res) => {
         console.log('updated: ', data);
 
         res.send({
-            message: "product modified successfully"
+            message: "tweet modified successfully"
         });
 
     } catch (error) {
