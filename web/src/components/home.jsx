@@ -11,21 +11,21 @@ function Home() {
   let { state } = useContext(GlobalContext);
 
 
-  const [tweet, settweet] = useState([])
+  const [tweets, settweets] = useState([])
   const [loadtweet, setloadtweet] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingTweet, seteditingTweet] = useState(null)
 
 
-  const getAlltweet = async () => {
+  const getAlltweets = async () => {
     try {
-      const response = await axios.get(`${state.baseUrl}/tweet`)
+      const response = await axios.get(`${state.baseUrl}/tweets`)
       // console.log("response: ", response.data);
 
-      settweet(response.data.data)
+      settweets(response.data.data)
 
     } catch (error) {
-      console.log("error in getting all tweet", error);
+      console.log("error in getting all tweets", error);
     }
   }
 
@@ -37,7 +37,7 @@ function Home() {
       setloadtweet(!loadtweet)
 
     } catch (error) {
-      console.log("error in getting all tweet", error);
+      console.log("error in getting all tweets", error);
     }
   }
 
@@ -45,38 +45,38 @@ function Home() {
     setIsEditMode(!isEditMode)
     seteditingTweet(tweet)
 
-    editFormik.setFieldValue("tweetText", tweet.name)
-    editFormik.setFieldValue("tweetPrice", tweet.price)
-    editFormik.setFieldValue("tweetDescription", tweet.description)
+    editFormik.setFieldValue("tweetsText", tweet.name)
+    editFormik.setFieldValue("tweetsPrice", tweet.price)
+    editFormik.setFieldValue("tweetsDescription", tweet.description)
 
   }
 
   useEffect(() => {
 
-    getAlltweet()
+    getAlltweets()
 
   }, [loadtweet])
 
 
-  const tweetValidatonSchema = yup.object({
-    tweetText: yup
-      .string('Enter your tweet name')
-      .required('tweet name is required')
+  const tweetsValidatonSchema = yup.object({
+    tweetsText: yup
+      .string('Enter your tweets name')
+      .required('tweets name is required')
       .min(3, "please enter more then 3 characters ")
       .max(140, "please enter within 140 characters ")
   })
 
   const myFormik = useFormik({
     initialValues: {
-      tweetText: ''
+      tweetsText: ''
     },
 
-    validationSchema: tweetValidatonSchema,
+    validationSchema: tweetsValidatonSchema,
     onSubmit: (values) => {
       console.log("values: ", values);
 
       axios.post(`${state.baseUrl}/tweet`, {
-        name: values.tweetText
+        text: values.tweetsText
       })
         .then(response => {
           console.log("response: ", response.data);
@@ -87,16 +87,17 @@ function Home() {
         })
     },
   });
+  
   const editFormik = useFormik({
     initialValues: {
-      tweetText: ''
+      tweetsText: ''
     },
-    validationSchema: tweetValidatonSchema,
+    validationSchema: tweetsValidatonSchema,
     onSubmit: (values) => {
       console.log("values: ", values);
 
       axios.put(`${state.baseUrl}/tweet/${editingTweet._id}`, {
-        text: values.tweetText,
+        text: values.tweetsText,
 
       })
         .then(response => {
@@ -115,16 +116,16 @@ function Home() {
     <div>
       <form onSubmit={myFormik.handleSubmit}>
         <textarea
-          id="tweetText"
+          id="tweetsText"
           placeholder="What is in your mind?"
-          value={myFormik.values.tweetText}
+          value={myFormik.values.tweetsText}
           onChange={myFormik.handleChange}
           rows="4"
           cols="50"
         ></textarea>
         {
-          (myFormik.touched.tweetText && Boolean(myFormik.errors.tweetText)) ?
-            <span style={{ color: "red" }}>{myFormik.errors.tweetText}</span>
+          (myFormik.touched.tweetsText && Boolean(myFormik.errors.tweetsText)) ?
+            <span style={{ color: "red" }}>{myFormik.errors.tweetsText}</span>
             :
             null
         }
@@ -140,7 +141,7 @@ function Home() {
 
 
       <div>
-        {tweet.map((eachProduct, i) => (
+        {tweets.map((eachProduct, i) => (
           <div key={eachProduct._id} style={{ border: "1px solid black", padding: 10, margin: 10, borderRadius: 15 }}>
             <h2>{eachProduct.name}</h2>
             <p>{eachProduct._id}</p>
@@ -160,14 +161,14 @@ function Home() {
 
                 <form onSubmit={editFormik.handleSubmit}>
                   <input
-                    id="tweetText"
+                    id="tweetsText"
                     placeholder="Product Name"
-                    value={editFormik.values.tweetText}
+                    value={editFormik.values.tweetsText}
                     onChange={editFormik.handleChange}
                   />
                   {
-                    (editFormik.touched.tweetText && Boolean(editFormik.errors.tweetText)) ?
-                      <span style={{ color: "red" }}>{editFormik.errors.tweetText}</span>
+                    (editFormik.touched.tweetsText && Boolean(editFormik.errors.tweetsText)) ?
+                      <span style={{ color: "red" }}>{editFormik.errors.tweetsText}</span>
                       :
                       null
                   }
