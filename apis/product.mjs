@@ -50,6 +50,32 @@ router.get('/tweets', (req, res) => {
         {
             sort: { "_id": -1 },
             limit: 100,
+            skip: 0,
+            populate: {
+                path: "owner",
+                select: 'firstName lastName email'
+            }
+        },
+        (err, data) => {
+            if (!err) {
+                res.send({
+                    message: "got all tweets successfully",
+                    data: data
+                })
+            } else {
+                res.status(500).send({
+                    message: "server error"
+                })
+            }
+        });
+}, [])
+
+router.get('/tweetFeed', (req, res) => {
+
+    tweetModel.find({  isDeleted: false }, {},
+        {
+            sort: { "_id": -1 },
+            limit: 100,
             skip: 0
         },
         (err, data) => {

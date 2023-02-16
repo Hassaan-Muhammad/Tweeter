@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 let tweetSchema = new mongoose.Schema({
     text: { type: String, required: true }, 
-    owner: { type: mongoose.ObjectId, required: true },
+    owner: { type: mongoose.ObjectId, ref: "users" , required: true },
     isDeleted:{type: Boolean, default: false},
     createdOn: { type: Date, default: Date.now }
 });

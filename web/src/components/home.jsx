@@ -19,7 +19,7 @@ function Home() {
 
   const getAlltweets = async () => {
     try {
-      const response = await axios.get(`${state.baseUrl}/tweets`)
+      const response = await axios.get(`${state.baseUrl}/tweetFeed`)
       // console.log("response: ", response.data);
 
       settweets(response.data.data)
@@ -114,6 +114,8 @@ function Home() {
 
   return (
     <div>
+        <h1>this is Home</h1>
+
       <form onSubmit={myFormik.handleSubmit}>
         <textarea
           id="tweetsText"
@@ -141,13 +143,12 @@ function Home() {
 
 
       <div>
+
         {tweets.map((eachProduct, i) => (
           <div key={eachProduct._id} style={{ border: "1px solid black", padding: 10, margin: 10, borderRadius: 15 }}>
             <h2>{eachProduct.text}</h2>
             <p>{eachProduct._id}</p>
-            <h5>{eachProduct.price}</h5>
-            <p>{eachProduct.description}</p>
-
+           
             <button onClick={() => {
               deleteTweet(eachProduct._id)
             }}>delete</button>
