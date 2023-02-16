@@ -143,7 +143,7 @@ function Home() {
       <div>
         {tweets.map((eachProduct, i) => (
           <div key={eachProduct._id} style={{ border: "1px solid black", padding: 10, margin: 10, borderRadius: 15 }}>
-            <h2>{eachProduct.name}</h2>
+            <h2>{eachProduct.text}</h2>
             <p>{eachProduct._id}</p>
             <h5>{eachProduct.price}</h5>
             <p>{eachProduct.description}</p>
