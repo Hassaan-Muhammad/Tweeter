@@ -12,6 +12,8 @@ import About from "./components/about";
 import Gallery from "./components/gallery";
 import Login from "./components/login";
 import Signup from "./components/signup";
+import ChangePassword from "./components/changePassword";
+
 
 
 //iubibib
@@ -98,7 +100,6 @@ function App() {
           <nav className='navBar'>
             <ul >
               <li> <Link to={`/`}>Home</Link> </li>
-              {/* <li> <Link to={`/gallery`}>Gallery</Link> </li> */}
               <li> <Link to={`/about`}>Profile</Link> </li>
               <li> {state.user.firstName} <button onClick={logoutHandler}>Logout</button> </li>
             </ul>
@@ -121,7 +122,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="about" element={<About />} />
-          <Route path="gallery" element={<Gallery />} />
+          <Route path="/change-password" element={<ChangePassword />} />
           <Route path="*" element={<Navigate to="/" replace={true} />} />
         </Routes>
         : null}

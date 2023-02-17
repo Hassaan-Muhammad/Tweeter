@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import authApis from './apis/auth.mjs'
 import productApis from './apis/product.mjs'
 import { userModel } from './dbRepo/model.mjs'
+import { stringToHash, varifyHash, } from "bcrypt-inzi"
 
 
 
@@ -74,18 +75,18 @@ app.use('/api/v1', (req, res, next) => {
 app.use(`/api/v1`, productApis)
 
 
-const getUser=  async (req, res) => {
+const getUser = async (req, res) => {
 
     let _id = "";
-    if(req.param._id){
-        _id= req.param._id 
+    if (req.param._id) {
+        _id = req.param._id
     }
-    else{
-        _id=req.body.token._id
+    else {
+        _id = req.body.token._id
     }
 
     try {
-        const user = await userModel.findOne({ _id: _id },"email firstName lastName -_id").exec()
+        const user = await userModel.findOne({ _id: _id }, "email firstName lastName -_id").exec()
 
         if (!user) {
             res.status(401).send({})
@@ -105,8 +106,51 @@ const getUser=  async (req, res) => {
 
 }
 
-app.get('/api/v1/profile',getUser)
+app.get('/api/v1/profile', getUser)
 app.get('/api/v1/profile:id', getUser)
+
+
+
+app.post('/api/v1/change-password', async (req, res) => {
+
+    try {
+
+        const body = req.body
+
+        const currentPassword = body.currentPassword
+        const newPassword = body.password
+        const _id = req.body.Token._id
+
+
+
+        // check if user exist
+        const user = await userModel.findOne(
+            { _id: _id },
+            "password",
+        ).exec()
+
+        if (!user) throw new Error("user not found")
+
+        const isMatched = await varifyHash(currentPassword, user.password)
+        if (!isMatched) throw new Error("password mismatch")
+
+        const newhash = await stringToHash(newPassword)
+
+        await userModel.updateOne({ _id: _id }, { password: newhash }).exec()
+
+        //success
+        res.send({
+            message: "password change successfully",
+        });
+        return;
+
+    }
+    catch (error) {
+        console.log("error", error)
+        res.status(500).send()
+    }
+
+})
 
 
 

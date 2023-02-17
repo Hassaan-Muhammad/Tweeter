@@ -5,6 +5,8 @@ import axios from "axios";
 import { useEffect, useState, useContext } from 'react';
 import { GlobalContext } from '../context/Context';
 import './about.css'
+import { Link  } from "react-router-dom";
+
 
 import coverImage from '../img/cover.jpg';
 import profileImage from '../img/profile.jpg';
@@ -123,7 +125,9 @@ function About() {
         <div className='banner'>
             <img className='cover' src={coverImage} alt=''/>
             <img className='profile'src={profileImage} alt=''/>
-
+            <button>
+            <Link to={`/change-password`}>Change Password</Link>
+            </button>
         </div>
       <form onSubmit={myFormik.handleSubmit}>
         <textarea
