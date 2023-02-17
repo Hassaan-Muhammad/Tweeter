@@ -119,7 +119,7 @@ app.post('/api/v1/change-password', async (req, res) => {
 
         const currentPassword = body.currentPassword
         const newPassword = body.password
-        const _id = req.body.Token._id
+        const _id = req.body.token._id
 
 
 
