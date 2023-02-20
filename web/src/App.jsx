@@ -12,7 +12,8 @@ import About from "./components/about";
 import Gallery from "./components/gallery";
 import Login from "./components/login";
 import Signup from "./components/signup";
-import ChangePassword from "./components/changePassword";
+import ChangePassword from "./components/changePassword copy"
+import ForgetPassword from "./components/forgetPassword";
 
 
 
@@ -131,6 +132,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="signup" element={<Signup />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
           <Route path="*" element={<Navigate to="/" replace={true} />} />
         </Routes>
         : null

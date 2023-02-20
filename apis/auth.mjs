@@ -1,10 +1,11 @@
 import express from 'express';
-import {userModel } from './../dbRepo/model.mjs'
+import { userModel ,otpModel } from './../dbRepo/model.mjs'
 import {
     stringToHash,
     varifyHash,
 } from "bcrypt-inzi";
 import jwt from 'jsonwebtoken';
+import { nanoid ,customAlphabet } from 'nanoid'
 
 
 const SECRET = process.env.SECRET || "topsecret";
@@ -114,7 +115,7 @@ router.post('/login', (req, res) => {
                                 exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24),
                             }, SECRET);
 
-                            console.log("token: ", token); 
+                            console.log("token: ", token);
 
                             res.cookie('Token', token, {
                                 maxAge: 86_400_000,
@@ -157,7 +158,7 @@ router.post('/login', (req, res) => {
 router.post('/logout', (req, res) => {
 
     res.clearCookie('Token', {
-        
+
         httpOnly: true,
         sameSite: 'none',
         secure: true
@@ -166,6 +167,117 @@ router.post('/logout', (req, res) => {
     res.send({ message: "Logout successful" });
 }, [])
 
+
+router.post('/forget-password', async (req, res) => {
+
+    try {
+
+        let body = req.body;
+        body.email = body.email.toLowerCase();
+
+        if (!body.email) { // null check - undefined, "", 0 , false, null , NaN
+            res.status(400).send(
+                `required fields missing, request example: 
+                {
+                    "email": "abc@abc.com"
+                }`
+            );
+            return;
+        }
+
+
+        // check if user exist
+        const user = await userModel.findOne(
+            { email: body.email },
+            "firstName lastName email",
+        ).exec()
+
+        if (!user) throw new Error("user not found")
+
+        const nanoid = customAlphabet('1234567890', 5)
+        const OTP = nanoid()
+
+        console.log("OTP:", OTP)
+        otpModel.create({
+            otp: OTP,
+            email: body.email
+        })
+
+        // TODO:  send OTP via email
+        
+
+
+        res.send({
+            message: "OTP sent success",
+        });
+        return;
+
+    }
+    catch (error) {
+        console.log("error", error)
+        res.status(500).send({
+            message: error.message
+        })
+    }
+
+
+}, [])
+
+
+router.post('/forget-password-2', async (req, res) => {
+
+    try {
+
+        let body = req.body;
+        body.email = body.email.toLowerCase();
+
+        if (!body.email || !body.otp || !body.newPassword) { // null check - undefined, "", 0 , false, null , NaN
+            res.status(400).send(
+                `required fields missing, request example: 
+                {
+                    "email": "abc@abc.com"
+                    "OTP": "12345"
+                    "newPassword": someSecretString
+                }`
+            );
+            return;
+        }
+
+
+        // check if user exist
+        const otpRecord = await otpModel.findOne(
+            { email: body.email }
+        )
+        .sort({_id: -1})
+        .exec()
+
+        if (!otpRecord) throw new Error("otp not found")
+
+        const isMatched= await varifyHash(body.otp, otpRecord.otp)
+        if(!isMatched) throw new Error("invalid OTP")
+
+        const newhash = await stringToHash(body.newPassword)
+
+        await userModel.updateOne({ email: body.email }, { password: newhash }).exec()
+
+        //success
+        res.send({
+            message: "password updated successfully",
+        });
+
+        
+        return;
+
+    }
+    catch (error) {
+        console.log("error", error)
+        res.status(500).send({
+            message: error.message
+        })
+    }
+
+
+}, [])
 
 
 export default router

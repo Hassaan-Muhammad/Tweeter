@@ -3,6 +3,8 @@ import { GlobalContext } from '../context/Context';
 
 import axios from 'axios';
 import './login.css'
+import { Link } from "react-router-dom";
+
 
 
 
@@ -47,7 +49,7 @@ function Login() {
 
     return (
         <>
-            <h4>This is Login page</h4>
+            <h4>This is Forget Password page</h4>
 
             {state.text}
 
@@ -85,6 +87,10 @@ function Login() {
                 <button type="submit">Login</button>
 
             </form>
+            <br/>
+            <button>
+            <Link to={`/forget-password`}>Forget Password</Link>
+            </button>
 
             <p>{result}</p>
         </>
