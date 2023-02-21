@@ -1,11 +1,12 @@
 import express from 'express';
-import { userModel ,otpModel } from './../dbRepo/model.mjs'
+import { userModel, otpModel } from './../dbRepo/model.mjs'
 import {
     stringToHash,
     varifyHash,
 } from "bcrypt-inzi";
 import jwt from 'jsonwebtoken';
-import { nanoid ,customAlphabet } from 'nanoid'
+import { nanoid, customAlphabet } from 'nanoid'
+import moment from 'moment';
 
 
 const SECRET = process.env.SECRET || "topsecret";
@@ -196,15 +197,17 @@ router.post('/forget-password', async (req, res) => {
 
         const nanoid = customAlphabet('1234567890', 5)
         const OTP = nanoid()
+        const otpHash = await stringToHash(OTP)
 
         console.log("OTP:", OTP)
+        console.log("otpHash", otpHash)
+
         otpModel.create({
-            otp: OTP,
+            otp: otpHash,
             email: body.email
         })
 
         // TODO:  send OTP via email
-        
 
 
         res.send({
@@ -246,15 +249,36 @@ router.post('/forget-password-2', async (req, res) => {
 
         // check if user exist
         const otpRecord = await otpModel.findOne(
-            { email: body.email }
+            {
+                email: body.email,
+                isUsed: false
+            }
         )
-        .sort({_id: -1})
-        .exec()
+            .sort({ _id: -1 })
+            .exec()
+        
+
+
 
         if (!otpRecord) throw new Error("otp not found")
+        if (otpRecord.isUsed) throw new Error("INVALID OTP")
+        await otpRecord.update({ isUsed: true }).exec();
 
-        const isMatched= await varifyHash(body.otp, otpRecord.otp)
-        if(!isMatched) throw new Error("invalid OTP")
+        console.log("Otp record", otpRecord)
+        console.log("Otp record", otpRecord.createdOn) 
+
+
+        const now = moment();
+        const optCreatedTime = moment(otpRecord.createdOn)
+        const diffInMinutes = now.diff(optCreatedTime, "minutes")
+       
+        console.log("diffInMinutes", diffInMinutes)
+        if (diffInMinutes >= 5) {throw new Error("OTP expired")}
+
+
+
+        const isMatched = await varifyHash(body.otp, otpRecord.otp)
+        if (!isMatched) throw new Error("invalid OTP")
 
         const newhash = await stringToHash(body.newPassword)
 
@@ -265,7 +289,7 @@ router.post('/forget-password-2', async (req, res) => {
             message: "password updated successfully",
         });
 
-        
+
         return;
 
     }
