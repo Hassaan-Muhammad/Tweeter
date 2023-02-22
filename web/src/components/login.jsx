@@ -49,7 +49,7 @@ function Login() {
 
     return (
         <>
-            <h4>This is Forget Password page</h4>
+            <h4>This is Login page</h4>
 
             {state.text}
 
