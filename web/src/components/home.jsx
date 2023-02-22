@@ -19,6 +19,8 @@ function Home() {
   const [editingTweet, seteditingTweet] = useState(null)
 
   const [eof, setEof] = useState(false)
+  const [preview, setPreview] = useState(null)
+
 
 
   const getAlltweets = async () => {
@@ -84,6 +86,28 @@ function Home() {
     onSubmit: (values) => {
       console.log("values: ", values);
 
+      let fileInput= document.getElementById("picture")
+      console.log("fileInput: ", fileInput.files[0]);
+
+      let formData = new FormData();
+      formData.append("myFile", fileInput.files[0]);
+      formData.append("text", values.tweetsText);
+
+      axios({
+        method: 'post',
+        url: `${state.baseUrl}/tweet`,
+        data: formData,
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+        .then(res => {
+          setloadtweet(!loadtweet)
+          console.log(`upload Success` + res.data);
+        })
+        .catch(err => {
+          console.log("error: ", err);
+        })
+
+
       axios.post(`${state.baseUrl}/tweet`, {
         text: values.tweetsText
       })
@@ -140,6 +164,24 @@ function Home() {
             :
             null
         }
+        <br />
+        <label htmlFor='picture'>Picture for tweet</label>
+        <br />
+        <input 
+        id='picture' 
+        type="file" 
+        accept='image/*' 
+        onChange={(e)=>{
+
+          let url = URL.createObjectURL(e.currentTarget.files[0])
+          console.log("url: ", url);
+
+          setPreview(url)
+
+        }}
+        />
+        <br/>
+        <img width={200} src={preview} alt=""/>
 
 
         <br />
