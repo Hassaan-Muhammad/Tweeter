@@ -206,7 +206,9 @@ function Home() {
             <div>{moment(eachProduct?.createdOn).fromNow()} </div>
             <h2>{eachProduct?.text}</h2>
 
-            {/* <p>{eachProduct._id}</p> */}
+            <img width={200} src={eachProduct?.imageUrl} alt="tweetimage" />
+
+          <br/>
 
             <button onClick={() => {
               deleteTweet(eachProduct._id)

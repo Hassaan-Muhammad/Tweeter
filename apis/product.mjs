@@ -1,14 +1,34 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { tweetModel } from './../dbRepo/model.mjs'
+import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import bucket from '../firebaseAdmin/index.mjs';
+import fs from 'fs'
+
+
+
+const storageConfig = multer.diskStorage({
+    destination: './uploads/',
+    filename: function (req, file, cb) {
+
+        console.log("mul-file: ", file);
+        cb(null, `${new Date().getTime()}-${file.originalname}`)
+    }
+})
+var uploadMiddleware = multer({ storage: storageConfig })
+
+
 
 const router = express.Router()
 
 
+router.post('/tweet', uploadMiddleware.any(), (req, res) => {
 
-router.post('/tweet', (req, res) => {
 
     const body = req.body;
+
+    const token = jwt.decode(req.cookies.Token)
 
     if ( // validation
         !body.text
@@ -18,34 +38,73 @@ router.post('/tweet', (req, res) => {
         });
         return;
     }
-
     console.log(body.text)
 
 
-
-    tweetModel.create({
-        text: body.text,
-        owner: new mongoose.Types.ObjectId(body.token._id)
-    },
-        (err, saved) => {
+    bucket.upload(
+        req.files[0].path,
+        {
+            destination: `tweetPictures/${req.files[0].filename}`, // give destination name if you want to give a certain name to file in bucket, include date to make name unique otherwise it will replace previous file with the same name
+        },
+        function (err, file, apiResponse) {
             if (!err) {
-                console.log(saved);
+                // console.log("api resp: ", apiResponse);
 
-                res.send({
-                    message: "tweet added successfully"
-                });
-            } else {
-                res.status(500).send({
-                    message: "server error"
+                // https://googleapis.dev/nodejs/storage/latest/Bucket.html#getSignedUrl
+                file.getSignedUrl({
+                    action: 'read',
+                    expires: '03-09-2999'
+                }).then((urlData, err) => {
+                    if (!err) {
+                        console.log("public downloadable url: ", urlData[0]) // this is public downloadable url 
+
+                        // // delete file from folder before sending response back to client (optional but recommended)
+                        // // optional because it is gonna delete automatically sooner or later
+                        // // recommended because you may run out of space if you dont do so, and if your files are sensitive it is simply not safe in server folder
+
+                        try {
+                            fs.unlinkSync(req.files[0].path)
+                            //file removed
+                        } catch (err) {
+                            console.error(err)
+                        }
+
+                        tweetModel.create({
+                            text: body.text,
+                            imageUrl: urlData[0],
+                            owner: new mongoose.Types.ObjectId(token._id)
+                        },
+                            (err, saved) => {
+                                if (!err) {
+                                    console.log(saved);
+                    
+                                    res.send({
+                                        message: "tweet added successfully"
+                                    });
+                                } else {
+                                    res.status(500).send({
+                                        message: "server error"
+                                    })
+                                }
+                            })
+                    }
                 })
+            } else {
+                console.log("err: ", err)
+                res.status(500).send();
             }
-        })
+        });
+
+
+
+
+   
 })
 
 router.get('/tweets', (req, res) => {
 
-    const userId = new mongoose.Types.ObjectId(req.body.token._id);
-   
+    const userId = new mongoose.Types.ObjectId(req.token._id);
+
     tweetModel.find({ owner: userId, isDeleted: false }, {},
         {
             sort: { "_id": -1 },
@@ -72,9 +131,9 @@ router.get('/tweets', (req, res) => {
 
 router.get('/tweetFeed', (req, res) => {
 
-    const page= req.query.page || 0
+    const page = req.query.page || 0
 
-    tweetModel.find({  isDeleted: false }, {},
+    tweetModel.find({ isDeleted: false }, {},
         {
             sort: { "_id": -1 },
             limit: 5,
@@ -124,11 +183,11 @@ router.get('/tweet/:id', (req, res) => {
 
 router.delete('/tweet/:id', (req, res) => {
     const id = req.params.id;
-    const body= req.body;
+    const body = req.body;
 
     tweetModel.deleteOne({
         _id: id,
-        owner: new mongoose.Types.ObjectId(body.token._id)
+        owner: new mongoose.Types.ObjectId(token._id)
     }
         , (err, deletedData) => {
             console.log("deleted: ", deletedData);
@@ -178,12 +237,12 @@ router.put('/tweet/:id', async (req, res) => {
     try {
         let data = await tweetModel.findOneAndUpdate(
             {
-            _id: id,
-            owner: new mongoose.Types.ObjectId(body.token._id)
-        },
+                _id: id,
+                owner: new mongoose.Types.ObjectId(token._id)
+            },
             {
                 text: body.text,
-        
+
             },
             { new: true }
         ).exec();
