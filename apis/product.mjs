@@ -103,7 +103,12 @@ router.post('/tweet', uploadMiddleware.any(), (req, res) => {
 
 router.get('/tweets', (req, res) => {
 
-    const userId = new mongoose.Types.ObjectId(req.token._id);
+
+    const body = req.body;
+
+    const token = jwt.decode(req.cookies.Token)
+
+    const userId = new mongoose.Types.ObjectId(token._id);
 
     tweetModel.find({ owner: userId, isDeleted: false }, {},
         {

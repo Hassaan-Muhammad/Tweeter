@@ -23,6 +23,7 @@ function About() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingTweet, seteditingTweet] = useState(null)
 
+  
 
   const getAlltweets = async () => {
     try {
@@ -161,6 +162,9 @@ function About() {
             <h2>{eachProduct?.owner?.firstName}</h2>
             <h2>{eachProduct.text}</h2>
             <p>{eachProduct._id}</p>
+            <img width={200} src={eachProduct?.imageUrl} alt="tweetimage" />
+
+          <br/>
            
 
             <button onClick={() => {
